@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import CodeEditor from "./components/CodeEditor";
 import Preview from "./components/Preview";
 import "./App.css";
@@ -35,9 +35,43 @@ return (
 const App: React.FC = () => {
   const [code, setCode] = useState(defaultCode);
   const [runCode, setRunCode] = useState(defaultCode);
+  const [loading, setLoading] = useState(false);
 
-  const handleRun = useCallback(() => {
+  useEffect(() => {
+    const fetchCode = async () => {
+      try {
+        const response = await fetch("http://localhost:3001/api/render");
+        if (response.ok) {
+          const data = await response.json();
+          // Assuming the server returns { code: string }
+          if (data.code && data.code !== code) {
+            setCode(data.code);
+            setRunCode(data.code);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching code:", error);
+      }
+    };
+
+    const intervalId = setInterval(fetchCode, 2000);
+    return () => clearInterval(intervalId);
+  }, []); // Only run once on mount
+
+  const handleRun = useCallback(async () => {
     setRunCode(code);
+    try {
+      setLoading(true);
+      await fetch("http://localhost:3001/api/render", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+    } catch (err) {
+      console.error("Failed to sync code", err);
+    } finally {
+      setLoading(false);
+    }
   }, [code]);
 
   return (
