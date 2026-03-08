@@ -1,0 +1,5 @@
+- [x] scaffold-project
+- [x] install-dependencies
+- [x] create-components
+- [x] implement-logic
+- [x] verify-build
